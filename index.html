@@ -1,0 +1,1644 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Space</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-pink: #f8d7da;
+            --secondary-lavender: #e7d3f4;
+            --soft-peach: #ffeaa7;
+            --mint-green: #d1f2eb;
+            --soft-blue: #d4f1f4;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --white: #ffffff;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --error: #e74c3c;
+            --success: #27ae60;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: linear-gradient(135deg, var(--primary-pink), var(--soft-blue));
+            min-height: 100vh;
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            display: none;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--text-light);
+            border-top: 5px solid var(--primary-pink);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Setup Screen */
+        .setup-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .setup-card {
+            background: var(--white);
+            border-radius: 25px;
+            padding: 3rem;
+            text-align: center;
+            box-shadow: 0 20px 60px var(--shadow);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .setup-card h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, var(--primary-pink), var(--secondary-lavender));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .setup-step {
+            display: none;
+            text-align: left;
+        }
+
+        .setup-step.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .setup-step h3 {
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+
+        .setup-step p {
+            margin-bottom: 1rem;
+            color: var(--text-light);
+        }
+
+        .setup-step ol {
+            margin-bottom: 2rem;
+            padding-left: 1.5rem;
+        }
+
+        .setup-step li {
+            margin-bottom: 0.5rem;
+            color: var(--text-light);
+        }
+
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin: 1rem 0;
+            white-space: pre-wrap;
+        }
+
+        /* Auth Screen */
+        .auth-container {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .auth-card {
+            background: var(--white);
+            border-radius: 25px;
+            padding: 3rem;
+            text-align: center;
+            box-shadow: 0 20px 60px var(--shadow);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .auth-card h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, var(--primary-pink), var(--secondary-lavender));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .google-signin-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--white);
+            border: 2px solid var(--text-light);
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--text-dark);
+            margin-bottom: 2rem;
+        }
+
+        .google-signin-btn:hover {
+            background: var(--mint-green);
+            border-color: var(--primary-pink);
+            transform: translateY(-2px);
+        }
+
+        /* Room Management */
+        .room-options {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .room-btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .create-room-btn {
+            background: var(--secondary-lavender);
+            color: var(--text-dark);
+        }
+
+        .join-room-btn {
+            background: var(--primary-pink);
+            color: var(--text-dark);
+        }
+
+        .room-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px var(--shadow);
+        }
+
+        .room-input-container {
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .room-input-container.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .room-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--text-light);
+            border-radius: 15px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .room-input:focus {
+            outline: none;
+            border-color: var(--primary-pink);
+        }
+
+        .room-code-display {
+            background: var(--mint-green);
+            padding: 1rem;
+            border-radius: 15px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            letter-spacing: 3px;
+            margin-bottom: 1rem;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .alert.error {
+            background: #ffeaea;
+            color: var(--error);
+            border: 1px solid var(--error);
+        }
+
+        .alert.success {
+            background: #eafaf1;
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        /* Form inputs */
+        .form-group {
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-pink);
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 20px var(--shadow);
+            display: none;
+        }
+
+        nav.active {
+            display: block;
+        }
+
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-menu li {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-menu li:hover, .nav-menu li.active {
+            background: var(--secondary-lavender);
+            transform: translateY(-2px);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .room-info {
+            background: var(--mint-green);
+            padding: 0.5rem 1rem;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .exit-room-btn {
+            background: var(--error);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .exit-room-btn:hover {
+            background: #c0392b;
+            transform: translateY(-1px);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 100px 2rem 2rem;
+            min-height: 100vh;
+            display: none;
+        }
+
+        .container.active {
+            display: block;
+        }
+
+        /* Page Sections */
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 1rem 0;
+            box-shadow: 0 10px 30px var(--shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h2 {
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+            font-size: 1.8rem;
+        }
+
+        .card h3 {
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+            font-size: 1.3rem;
+        }
+
+        .btn {
+            background: var(--secondary-lavender);
+            color: var(--text-dark);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 15px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: var(--primary-pink);
+            transform: translateY(-2px);
+        }
+
+        .btn.primary {
+            background: var(--primary-pink);
+        }
+
+        .btn.primary:hover {
+            background: var(--secondary-lavender);
+        }
+
+        /* Content items */
+        .content-item {
+            background: var(--white);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 5px 20px var(--shadow);
+        }
+
+        .content-item h4 {
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .content-item .meta {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: 1rem;
+        }
+
+        /* Chat */
+        .chat-container {
+            height: 400px;
+            background: var(--white);
+            border-radius: 20px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            overflow-y: auto;
+            box-shadow: inset 0 2px 10px var(--shadow);
+        }
+
+        .chat-message {
+            margin: 1rem 0;
+            padding: 1rem;
+            border-radius: 15px;
+            max-width: 70%;
+        }
+
+        .message-sent {
+            background: var(--primary-pink);
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message-received {
+            background: var(--soft-blue);
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 25px;
+            background: var(--white);
+            box-shadow: 0 2px 10px var(--shadow);
+            font-size: 1rem;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-light);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-menu {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+
+            .nav-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .container {
+                padding: 120px 1rem 1rem;
+            }
+
+            .room-options {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Setup Screen -->
+    <div id="setupScreen" class="setup-container">
+        <div class="setup-card">
+            <h1>Our Space Setup 💕</h1>
+            
+            <!-- Step 1: Welcome -->
+            <div id="setupStep1" class="setup-step active">
+                <h3>Welcome! Let's set up your GitHub storage.</h3>
+                <p>To use Our Space with GitHub file storage, you need to configure a few things first:</p>
+                <ol>
+                    <li>Create a GitHub repository for your data</li>
+                    <li>Generate a Personal Access Token</li>
+                    <li>Configure the settings below</li>
+                </ol>
+                <button class="btn primary" onclick="nextStep()">Get Started</button>
+            </div>
+
+            <!-- Step 2: GitHub Repo -->
+            <div id="setupStep2" class="setup-step">
+                <h3>Step 1: Create GitHub Repository</h3>
+                <p>1. Go to <a href="https://github.com/new" target="_blank">GitHub</a> and create a new repository</p>
+                <p>2. Make it public or private (your choice)</p>
+                <p>3. Initialize with a README</p>
+                <p>4. Create a file called <code>rooms_data_1.txt</code> in the root</p>
+                
+                <div class="form-group">
+                    <label for="githubRepo">Your GitHub Repository (username/repo-name)</label>
+                    <input type="text" id="githubRepo" placeholder="e.g., yourusername/our-space-data">
+                </div>
+                
+                <button class="btn" onclick="prevStep()">Back</button>
+                <button class="btn primary" onclick="nextStep()">Next</button>
+            </div>
+
+            <!-- Step 3: Access Token -->
+            <div id="setupStep3" class="setup-step">
+                <h3>Step 2: Generate Access Token</h3>
+                <p>1. Go to <a href="https://github.com/settings/tokens" target="_blank">GitHub Tokens</a></p>
+                <p>2. Click "Generate new token" → "Generate new token (classic)"</p>
+                <p>3. Give it a name like "Our Space App"</p>
+                <p>4. Select these scopes:</p>
+                <ul>
+                    <li>✓ repo (Full control of private repositories)</li>
+                    <li>✓ public_repo (Access public repositories)</li>
+                </ul>
+                <p>5. Click "Generate token" and copy it</p>
+                
+                <div class="form-group">
+                    <label for="githubToken">GitHub Personal Access Token</label>
+                    <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+                </div>
+                
+                <button class="btn" onclick="prevStep()">Back</button>
+                <button class="btn primary" onclick="completeSetup()">Complete Setup</button>
+            </div>
+
+            <!-- Setup Complete -->
+            <div id="setupStep4" class="setup-step">
+                <h3>Setup Complete! 🎉</h3>
+                <p>Your GitHub storage is now configured. You can start using Our Space!</p>
+                <button class="btn primary" onclick="startApp()">Start Using Our Space</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Screen -->
+    <div id="authScreen" class="auth-container">
+        <div class="auth-card">
+            <h1>Our Space 💕</h1>
+            <p>A private sanctuary for couples to connect, share memories, and stay close no matter the distance.</p>
+            
+            <button class="google-signin-btn" onclick="signInWithGoogle()">
+                <svg width="20" height="20" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Continue with Google
+            </button>
+
+            <div id="roomManagement" style="display: none;">
+                <div class="room-options">
+                    <button class="room-btn create-room-btn" onclick="showCreateRoom()">Create Room</button>
+                    <button class="room-btn join-room-btn" onclick="showJoinRoom()">Join Room</button>
+                </div>
+
+                <div id="createRoomContainer" class="room-input-container">
+                    <p>Your room code:</p>
+                    <div id="roomCodeDisplay" class="room-code-display"></div>
+                    <p style="font-size: 0.9rem; color: var(--text-light);">Share this code with your partner</p>
+                    <button class="btn primary" onclick="createRoom()">Create Our Space</button>
+                </div>
+
+                <div id="joinRoomContainer" class="room-input-container">
+                    <input type="text" id="roomCodeInput" class="room-input" placeholder="Enter Room Code" maxlength="6">
+                    <button class="btn primary" onclick="joinRoom()">Join Our Space</button>
+                </div>
+
+                <div id="alertContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav id="mainNav">
+        <div class="nav-content">
+            <ul class="nav-menu">
+                <li class="nav-item active" data-page="home">🏠 Home</li>
+                <li class="nav-item" data-page="memories">📸 Memories</li>
+                <li class="nav-item" data-page="links">🔗 Links</li>
+                <li class="nav-item" data-page="notes">📝 Notes</li>
+                <li class="nav-item" data-page="chat">💬 Chat</li>
+            </ul>
+            <div class="user-info">
+                <div id="roomInfoDisplay" class="room-info"></div>
+                <img id="userAvatar" class="user-avatar" src="" alt="User">
+                <span id="userName"></span>
+                <button class="exit-room-btn" onclick="exitRoom()">Exit Room</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div id="mainContainer" class="container">
+        <!-- Home Page -->
+        <div id="home" class="page active">
+            <div class="card">
+                <h2>Welcome to Our Space 💕</h2>
+                <p id="welcomeMessage">Start creating beautiful memories together!</p>
+                <div id="roomStats" style="margin-top: 2rem;">
+                    <p><strong>Room Code:</strong> <span id="currentRoomCode"></span></p>
+                    <p><strong>Members:</strong> <span id="memberCount">1</span></p>
+                    <p><strong>Created:</strong> <span id="roomCreated"></span></p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Quick Actions</h3>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
+                    <button class="btn" onclick="showPage('memories')">Add Memory</button>
+                    <button class="btn" onclick="showPage('notes')">Write Note</button>
+                    <button class="btn" onclick="showPage('links')">Save Link</button>
+                    <button class="btn" onclick="showPage('chat')">Start Chat</button>
+                </div>
+            </div>
+
+            <div id="recentActivity" class="card">
+                <h3>Recent Activity</h3>
+                <div id="activityList" class="empty-state">
+                    <h3>No activity yet</h3>
+                    <p>Start by adding your first memory, note, or link!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Memories Page -->
+        <div id="memories" class="page">
+            <div class="card">
+                <h2>Our Memories 📸</h2>
+                <div class="form-group">
+                    <label for="memoryTitle">Memory Title</label>
+                    <input type="text" id="memoryTitle" placeholder="Enter memory title">
+                </div>
+                <div class="form-group">
+                    <label for="memoryDescription">Description</label>
+                    <textarea id="memoryDescription" placeholder="Describe this special moment..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="memoryDate">Date</label>
+                    <input type="date" id="memoryDate">
+                </div>
+                <button class="btn primary" onclick="addMemory()">Add Memory</button>
+            </div>
+
+            <div id="memoriesContainer"></div>
+        </div>
+
+        <!-- Links Page -->
+        <div id="links" class="page">
+            <div class="card">
+                <h2>Our Links 🔗</h2>
+                <div class="form-group">
+                    <label for="linkTitle">Link Title</label>
+                    <input type="text" id="linkTitle" placeholder="Enter link title">
+                </div>
+                <div class="form-group">
+                    <label for="linkUrl">URL</label>
+                    <input type="url" id="linkUrl" placeholder="https://example.com">
+                </div>
+                <div class="form-group">
+                    <label for="linkDescription">Description</label>
+                    <textarea id="linkDescription" placeholder="Why is this link special to you?"></textarea>
+                </div>
+                <button class="btn primary" onclick="addLink()">Save Link</button>
+            </div>
+
+            <div id="linksContainer"></div>
+        </div>
+
+        <!-- Notes Page -->
+        <div id="notes" class="page">
+            <div class="card">
+                <h2>Our Notes 📝</h2>
+                <div class="form-group">
+                    <label for="noteTitle">Note Title</label>
+                    <input type="text" id="noteTitle" placeholder="Enter note title">
+                </div>
+                <div class="form-group">
+                    <label for="noteContent">Message</label>
+                    <textarea id="noteContent" placeholder="Write your sweet message..."></textarea>
+                </div>
+                <button class="btn primary" onclick="addNote()">Save Note</button>
+            </div>
+
+            <div id="notesContainer"></div>
+        </div>
+
+        <!-- Chat Page -->
+        <div id="chat" class="page">
+            <div class="card">
+                <h2>Private Chat 💬</h2>
+                <div class="chat-container" id="chatContainer"></div>
+                
+                <div class="chat-input-container">
+                    <input type="text" class="chat-input" placeholder="Type your message..." id="messageInput">
+                    <button class="btn primary" onclick="sendMessage()">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        let config = {
+            githubRepo: '',
+            githubToken: '',
+            currentDataFile: 'rooms_data_1.txt',
+            maxFileSize: 50000 // 50KB limit per file
+        };
+
+        // Global variables
+        let currentUser = null;
+        let currentRoom = null;
+        let roomData = {};
+        let allRoomsData = {};
+        let currentSetupStep = 1;
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            checkSetup();
+            setupEventListeners();
+        });
+
+        // Setup functions
+        function checkSetup() {
+            const savedConfig = localStorage.getItem('githubConfig');
+            if (savedConfig) {
+                config = { ...config, ...JSON.parse(savedConfig) };
+                document.getElementById('setupScreen').style.display = 'none';
+                checkAuthState();
+            }
+        }
+
+        function nextStep() {
+            if (currentSetupStep === 1) {
+                document.getElementById('setupStep1').classList.remove('active');
+                document.getElementById('setupStep2').classList.add('active');
+                currentSetupStep = 2;
+            } else if (currentSetupStep === 2) {
+                const repo = document.getElementById('githubRepo').value.trim();
+                if (!repo || !repo.includes('/')) {
+                    showAlert('Please enter a valid repository name (username/repo-name)', 'error');
+                    return;
+                }
+                config.githubRepo = repo;
+                
+                document.getElementById('setupStep2').classList.remove('active');
+                document.getElementById('setupStep3').classList.add('active');
+                currentSetupStep = 3;
+            }
+        }
+
+        function prevStep() {
+            if (currentSetupStep === 2) {
+                document.getElementById('setupStep2').classList.remove('active');
+                document.getElementById('setupStep1').classList.add('active');
+                currentSetupStep = 1;
+            } else if (currentSetupStep === 3) {
+                document.getElementById('setupStep3').classList.remove('active');
+                document.getElementById('setupStep2').classList.add('active');
+                currentSetupStep = 2;
+            }
+        }
+
+        async function completeSetup() {
+            const token = document.getElementById('githubToken').value.trim();
+            if (!token) {
+                showAlert('Please enter your GitHub token', 'error');
+                return;
+            }
+
+            config.githubToken = token;
+
+            // Test the connection
+            showLoading(true);
+            try {
+                await testGitHubConnection();
+                
+                // Save config
+                localStorage.setItem('githubConfig', JSON.stringify(config));
+                
+                showLoading(false);
+                document.getElementById('setupStep3').classList.remove('active');
+                document.getElementById('setupStep4').classList.add('active');
+                currentSetupStep = 4;
+            } catch (error) {
+                showLoading(false);
+                showAlert('Failed to connect to GitHub. Please check your repository and token.', 'error');
+            }
+        }
+
+        async function testGitHubConnection() {
+            const response = await fetch(`https://api.github.com/repos/${config.githubRepo}/contents/${config.currentDataFile}`, {
+                headers: {
+                    'Authorization': `token ${config.githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (!response.ok && response.status !== 404) {
+                throw new Error('GitHub connection failed');
+            }
+
+            // If file doesn't exist, create it
+            if (response.status === 404) {
+                await createDataFile();
+            }
+        }
+
+        async function createDataFile() {
+            const content = btoa(''); // Empty file content in base64
+            
+            await fetch(`https://api.github.com/repos/${config.githubRepo}/contents/${config.currentDataFile}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${config.githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: 'Create initial data file for Our Space',
+                    content: content
+                })
+            });
+        }
+
+        function startApp() {
+            document.getElementById('setupScreen').style.display = 'none';
+            checkAuthState();
+        }
+
+        // GitHub Data Functions
+        async function loadAllRoomsData() {
+            try {
+                const response = await fetch(`https://api.github.com/repos/${config.githubRepo}/contents/${config.currentDataFile}`, {
+                    headers: {
+                        'Authorization': `token ${config.githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const content = atob(data.content);
+                    
+                    if (content.trim()) {
+                        allRoomsData = parseRoomsData(content);
+                    }
+                    
+                    return data.sha; // Return SHA for updates
+                }
+                return null;
+            } catch (error) {
+                console.error('Error loading rooms data:', error);
+                return null;
+            }
+        }
+
+        function parseRoomsData(content) {
+            const rooms = {};
+            const sections = content.split('---ROOM_SEPARATOR---');
+            
+            for (const section of sections) {
+                if (section.trim()) {
+                    try {
+                        const lines = section.trim().split('\n');
+                        const roomCode = lines[0].replace('ROOM:', '').trim();
+                        const jsonData = lines.slice(1).join('\n');
+                        rooms[roomCode] = JSON.parse(jsonData);
+                    } catch (error) {
+                        console.error('Error parsing room data:', error);
+                    }
+                }
+            }
+            
+            return rooms;
+        }
+
+        function stringifyRoomsData(rooms) {
+            const sections = [];
+            
+            for (const [roomCode, data] of Object.entries(rooms)) {
+                sections.push(`ROOM:${roomCode}\n${JSON.stringify(data, null, 2)}`);
+            }
+            
+            return sections.join('\n---ROOM_SEPARATOR---\n');
+        }
+
+        async function saveAllRoomsData() {
+            try {
+                showLoading(true);
+                
+                // Get current file SHA
+                const response = await fetch(`https://api.github.com/repos/${config.githubRepo}/contents/${config.currentDataFile}`, {
+                    headers: {
+                        'Authorization': `token ${config.githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                let sha = null;
+                if (response.ok) {
+                    const data = await response.json();
+                    sha = data.sha;
+                }
+
+                const content = stringifyRoomsData(allRoomsData);
+                
+                // Check if file is getting too large
+                if (content.length > config.maxFileSize) {
+                    await createNewDataFile();
+                    return;
+                }
+
+                const encodedContent = btoa(unescape(encodeURIComponent(content)));
+                
+                const updateResponse = await fetch(`https://api.github.com/repos/${config.githubRepo}/contents/${config.currentDataFile}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${config.githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: 'Update room data',
+                        content: encodedContent,
+                        sha: sha
+                    })
+                });
+
+                if (!updateResponse.ok) {
+                    throw new Error('Failed to save data');
+                }
+                
+                showLoading(false);
+            } catch (error) {
+                showLoading(false);
+                console.error('Error saving rooms data:', error);
+                showAlert('Failed to save data to GitHub', 'error');
+            }
+        }
+
+        async function createNewDataFile() {
+            // Find next available file number
+            let fileNumber = 2;
+            let newFileName = `rooms_data_${fileNumber}.txt`;
+            
+            while (true) {
+                try {
+                    const response = await fetch(`https://api.github.com/repos/${config.githubRepo}/contents/${newFileName}`, {
+                        headers: {
+                            'Authorization': `token ${config.githubToken}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                    
+                    if (response.status === 404) {
+                        // File doesn't exist, we can use this name
+                        break;
+                    }
+                    
+                    fileNumber++;
+                    newFileName = `rooms_data_${fileNumber}.txt`;
+                } catch (error) {
+                    break;
+                }
+            }
+
+            // Create new file with current room data
+            const roomData = allRoomsData[currentRoom];
+            const newFileData = {};
+            newFileData[currentRoom] = roomData;
+            
+            const content = stringifyRoomsData(newFileData);
+            const encodedContent = btoa(unescape(encodeURIComponent(content)));
+            
+            await fetch(`https://api.github.com/repos/${config.githubRepo}/contents/${newFileName}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${config.githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `Create new data file: ${newFileName}`,
+                    content: encodedContent
+                })
+            });
+
+            // Update config to use new file
+            config.currentDataFile = newFileName;
+            localStorage.setItem('githubConfig', JSON.stringify(config));
+            
+            showAlert(`Created new data file: ${newFileName}`, 'success');
+        }
+
+        // Auth functions
+        function signInWithGoogle() {
+            // Mock Google Sign-in for demo purposes
+            const mockUser = {
+                id: 'user_' + Date.now(),
+                name: prompt('Enter your name:') || 'User',
+                email: 'user@example.com',
+                picture: `https://ui-avatars.com/api/?name=${encodeURIComponent(prompt('Enter your name:') || 'User')}&background=f8d7da&color=2c3e50`
+            };
+            
+            currentUser = mockUser;
+            localStorage.setItem('currentUser', JSON.stringify(mockUser));
+            showRoomManagement();
+        }
+
+        function checkAuthState() {
+            const savedUser = localStorage.getItem('currentUser');
+            const savedRoom = localStorage.getItem('currentRoom');
+            
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                document.getElementById('authScreen').style.display = 'flex';
+                
+                if (savedRoom) {
+                    currentRoom = savedRoom;
+                    loadRoomData();
+                } else {
+                    showRoomManagement();
+                }
+            } else {
+                document.getElementById('authScreen').style.display = 'flex';
+            }
+        }
+
+        function showRoomManagement() {
+            document.getElementById('roomManagement').style.display = 'block';
+        }
+
+        // Room management functions
+        function showCreateRoom() {
+            hideRoomContainers();
+            const roomCode = generateRoomCode();
+            document.getElementById('roomCodeDisplay').textContent = roomCode;
+            document.getElementById('createRoomContainer').classList.add('active');
+        }
+
+        function showJoinRoom() {
+            hideRoomContainers();
+            document.getElementById('joinRoomContainer').classList.add('active');
+        }
+
+        function hideRoomContainers() {
+            document.querySelectorAll('.room-input-container').forEach(container => {
+                container.classList.remove('active');
+            });
+        }
+
+        function generateRoomCode() {
+            return Math.random().toString(36).substr(2, 6).toUpperCase();
+        }
+
+        async function createRoom() {
+            const roomCode = document.getElementById('roomCodeDisplay').textContent;
+            
+            showLoading(true);
+            await loadAllRoomsData();
+            
+            const newRoomData = {
+                code: roomCode,
+                creator: currentUser.id,
+                created: new Date().toISOString(),
+                members: [{
+                    id: currentUser.id,
+                    name: currentUser.name,
+                    email: currentUser.email,
+                    joinedAt: new Date().toISOString()
+                }],
+                memories: [],
+                links: [],
+                notes: [],
+                messages: []
+            };
+
+            allRoomsData[roomCode] = newRoomData;
+            await saveAllRoomsData();
+            
+            localStorage.setItem('currentRoom', roomCode);
+            currentRoom = roomCode;
+            roomData = newRoomData;
+            
+            showAlert('Room created successfully!', 'success');
+            setTimeout(() => {
+                showMainApp();
+            }, 1500);
+        }
+
+        async function joinRoom() {
+            const roomCode = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+            
+            if (!roomCode) {
+                showAlert('Please enter a room code', 'error');
+                return;
+            }
+
+            showLoading(true);
+            await loadAllRoomsData();
+            
+            if (!allRoomsData[roomCode]) {
+                showLoading(false);
+                showAlert('Room not found. Please check the code and try again.', 'error');
+                return;
+            }
+
+            // Add current user to room if not already a member
+            const room = allRoomsData[roomCode];
+            const existingMember = room.members.find(m => m.id === currentUser.id);
+            
+            if (!existingMember) {
+                room.members.push({
+                    id: currentUser.id,
+                    name: currentUser.name,
+                    email: currentUser.email,
+                    joinedAt: new Date().toISOString()
+                });
+                
+                // Add join message
+                room.messages.push({
+                    id: 'msg_' + Date.now(),
+                    content: `${currentUser.name} joined the room`,
+                    author: 'system',
+                    timestamp: new Date().toISOString(),
+                    type: 'system'
+                });
+                
+                allRoomsData[roomCode] = room;
+                await saveAllRoomsData();
+            }
+
+            localStorage.setItem('currentRoom', roomCode);
+            currentRoom = roomCode;
+            roomData = room;
+            
+            showAlert('Successfully joined the room!', 'success');
+            setTimeout(() => {
+                showMainApp();
+            }, 1500);
+        }
+
+        async function exitRoom() {
+            if (confirm('Are you sure you want to exit this room? You can always rejoin with the room code.')) {
+                // Add leave message
+                if (roomData && roomData.messages) {
+                    roomData.messages.push({
+                        id: 'msg_' + Date.now(),
+                        content: `${currentUser.name} left the room`,
+                        author: 'system',
+                        timestamp: new Date().toISOString(),
+                        type: 'system'
+                    });
+                    
+                    // Remove user from members list
+                    if (roomData.members) {
+                        roomData.members = roomData.members.filter(m => m.id !== currentUser.id);
+                    }
+                    
+                    allRoomsData[currentRoom] = roomData;
+                    await saveAllRoomsData();
+                }
+                
+                localStorage.removeItem('currentRoom');
+                currentRoom = null;
+                roomData = {};
+                
+                // Show room management again
+                document.getElementById('mainContainer').classList.remove('active');
+                document.getElementById('mainNav').classList.remove('active');
+                document.getElementById('authScreen').style.display = 'flex';
+                showRoomManagement();
+            }
+        }
+
+        async function loadRoomData() {
+            if (!currentRoom) return;
+            
+            showLoading(true);
+            await loadAllRoomsData();
+            
+            if (allRoomsData[currentRoom]) {
+                roomData = allRoomsData[currentRoom];
+                showMainApp();
+            } else {
+                showLoading(false);
+                showAlert('Room data not found', 'error');
+                localStorage.removeItem('currentRoom');
+                showRoomManagement();
+            }
+        }
+
+        async function saveRoomData() {
+            if (!currentRoom || !roomData) return;
+            
+            allRoomsData[currentRoom] = roomData;
+            await saveAllRoomsData();
+        }
+
+        function showMainApp() {
+            showLoading(false);
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('mainNav').classList.add('active');
+            document.getElementById('mainContainer').classList.add('active');
+            
+            // Update user info in nav
+            document.getElementById('userAvatar').src = currentUser.picture;
+            document.getElementById('userName').textContent = currentUser.name;
+            document.getElementById('roomInfoDisplay').textContent = `Room: ${currentRoom}`;
+            
+            updateUI();
+            
+            // Start periodic sync
+            startPeriodicSync();
+        }
+
+        function startPeriodicSync() {
+            // Sync data every 30 seconds
+            setInterval(async () => {
+                if (currentRoom) {
+                    await loadAllRoomsData();
+                    if (allRoomsData[currentRoom]) {
+                        roomData = allRoomsData[currentRoom];
+                        updateUI();
+                    }
+                }
+            }, 30000);
+        }
+
+        function updateUI() {
+            // Update home page
+            document.getElementById('currentRoomCode').textContent = currentRoom;
+            document.getElementById('memberCount').textContent = roomData.members ? roomData.members.length : 1;
+            document.getElementById('roomCreated').textContent = roomData.created ? new Date(roomData.created).toLocaleDateString() : 'Today';
+            
+            // Update content sections
+            updateMemoriesDisplay();
+            updateLinksDisplay();
+            updateNotesDisplay();
+            updateChatDisplay();
+            updateRecentActivity();
+        }
+
+        // Content management functions
+        async function addMemory() {
+            const title = document.getElementById('memoryTitle').value.trim();
+            const description = document.getElementById('memoryDescription').value.trim();
+            const date = document.getElementById('memoryDate').value;
+            
+            if (!title || !description) {
+                showAlert('Please fill in all fields', 'error');
+                return;
+            }
+
+            const memory = {
+                id: 'memory_' + Date.now(),
+                title,
+                description,
+                date: date || new Date().toISOString().split('T')[0],
+                author: currentUser.name,
+                authorId: currentUser.id,
+                created: new Date().toISOString()
+            };
+
+            if (!roomData.memories) roomData.memories = [];
+            roomData.memories.unshift(memory);
+            await saveRoomData();
+            
+            // Clear form
+            document.getElementById('memoryTitle').value = '';
+            document.getElementById('memoryDescription').value = '';
+            document.getElementById('memoryDate').value = '';
+            
+            updateMemoriesDisplay();
+            showAlert('Memory added successfully!', 'success');
+        }
+
+        async function addLink() {
+            const title = document.getElementById('linkTitle').value.trim();
+            const url = document.getElementById('linkUrl').value.trim();
+            const description = document.getElementById('linkDescription').value.trim();
+            
+            if (!title || !url) {
+                showAlert('Please fill in title and URL', 'error');
+                return;
+            }
+
+            const link = {
+                id: 'link_' + Date.now(),
+                title,
+                url,
+                description,
+                author: currentUser.name,
+                authorId: currentUser.id,
+                created: new Date().toISOString()
+            };
+
+            if (!roomData.links) roomData.links = [];
+            roomData.links.unshift(link);
+            await saveRoomData();
+            
+            // Clear form
+            document.getElementById('linkTitle').value = '';
+            document.getElementById('linkUrl').value = '';
+            document.getElementById('linkDescription').value = '';
+            
+            updateLinksDisplay();
+            showAlert('Link saved successfully!', 'success');
+        }
+
+        async function addNote() {
+            const title = document.getElementById('noteTitle').value.trim();
+            const content = document.getElementById('noteContent').value.trim();
+            
+            if (!title || !content) {
+                showAlert('Please fill in all fields', 'error');
+                return;
+            }
+
+            const note = {
+                id: 'note_' + Date.now(),
+                title,
+                content,
+                author: currentUser.name,
+                authorId: currentUser.id,
+                created: new Date().toISOString()
+            };
+
+            if (!roomData.notes) roomData.notes = [];
+            roomData.notes.unshift(note);
+            await saveRoomData();
+            
+            // Clear form
+            document.getElementById('noteTitle').value = '';
+            document.getElementById('noteContent').value = '';
+            
+            updateNotesDisplay();
+            showAlert('Note saved successfully!', 'success');
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const content = input.value.trim();
+            
+            if (!content) return;
+
+            const message = {
+                id: 'msg_' + Date.now(),
+                content,
+                author: currentUser.name,
+                authorId: currentUser.id,
+                timestamp: new Date().toISOString(),
+                type: 'message'
+            };
+
+            if (!roomData.messages) roomData.messages = [];
+            roomData.messages.push(message);
+            await saveRoomData();
+            
+            input.value = '';
+            updateChatDisplay();
+        }
+
+        // Display update functions
+        function updateMemoriesDisplay() {
+            const container = document.getElementById('memoriesContainer');
+            
+            if (!roomData.memories || roomData.memories.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>No memories yet</h3><p>Add your first special moment!</p></div>';
+                return;
+            }
+
+            container.innerHTML = roomData.memories.map(memory => `
+                <div class="content-item">
+                    <h4>${memory.title}</h4>
+                    <div class="meta">By ${memory.author} on ${new Date(memory.date).toLocaleDateString()}</div>
+                    <p>${memory.description}</p>
+                </div>
+            `).join('');
+        }
+
+        function updateLinksDisplay() {
+            const container = document.getElementById('linksContainer');
+            
+            if (!roomData.links || roomData.links.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>No links yet</h3><p>Save your first shared link!</p></div>';
+                return;
+            }
+
+            container.innerHTML = roomData.links.map(link => `
+                <div class="content-item">
+                    <h4><a href="${link.url}" target="_blank" style="color: var(--primary-pink);">${link.title}</a></h4>
+                    <div class="meta">Shared by ${link.author} on ${new Date(link.created).toLocaleDateString()}</div>
+                    ${link.description ? `<p>${link.description}</p>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function updateNotesDisplay() {
+            const container = document.getElementById('notesContainer');
+            
+            if (!roomData.notes || roomData.notes.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>No notes yet</h3><p>Write your first sweet message!</p></div>';
+                return;
+            }
+
+            container.innerHTML = roomData.notes.map(note => `
+                <div class="content-item">
+                    <h4>${note.title}</h4>
+                    <div class="meta">From ${note.author} on ${new Date(note.created).toLocaleDateString()}</div>
+                    <p>${note.content}</p>
+                </div>
+            `).join('');
+        }
+
+        function updateChatDisplay() {
+            const container = document.getElementById('chatContainer');
+            
+            if (!roomData.messages || roomData.messages.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>No messages yet</h3><p>Start your conversation!</p></div>';
+                return;
+            }
+
+            container.innerHTML = roomData.messages.map(message => {
+                if (message.type === 'system') {
+                    return `<div style="text-align: center; color: var(--text-light); margin: 1rem 0; font-style: italic;">${message.content}</div>`;
+                }
+                
+                const isSent = message.authorId === currentUser.id;
+                return `
+                    <div class="chat-message ${isSent ? 'message-sent' : 'message-received'}">
+                        <p>${message.content}</p>
+                        <small>${message.author} - ${new Date(message.timestamp).toLocaleTimeString()}</small>
+                    </div>
+                `;
+            }).join('');
+            
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function updateRecentActivity() {
+            const container = document.getElementById('activityList');
+            const activities = [];
+            
+            // Collect recent activities from all types
+            if (roomData.memories) {
+                roomData.memories.slice(0, 3).forEach(memory => {
+                    activities.push({
+                        type: 'memory',
+                        text: `${memory.author} added memory: "${memory.title}"`,
+                        time: memory.created
+                    });
+                });
+            }
+            
+            if (roomData.notes) {
+                roomData.notes.slice(0, 3).forEach(note => {
+                    activities.push({
+                        type: 'note',
+                        text: `${note.author} wrote: "${note.title}"`,
+                        time: note.created
+                    });
+                });
+            }
+            
+            if (roomData.links) {
+                roomData.links.slice(0, 3).forEach(link => {
+                    activities.push({
+                        type: 'link',
+                        text: `${link.author} shared: "${link.title}"`,
+                        time: link.created
+                    });
+                });
+            }
+
+            if (activities.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>No activity yet</h3><p>Start by adding your first memory, note, or link!</p></div>';
+                return;
+            }
+
+            // Sort by time and take the 5 most recent
+            activities.sort((a, b) => new Date(b.time) - new Date(a.time));
+            
+            container.innerHTML = activities.slice(0, 5).map(activity => `
+                <p style="margin: 0.5rem 0;">📝 ${activity.text}</p>
+            `).join('');
+        }
+
+        // Utility functions
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert ${type}`;
+            alert.textContent = message;
+            
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+        }
+
+        function setupEventListeners() {
+            // Navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const targetPage = item.getAttribute('data-page');
+                    showPage(targetPage);
+                    
+                    // Update nav active state
+                    document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                    item.classList.add('active');
+                });
+            });
+
+            // Enter key support for chat
+            document.getElementById('messageInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+
+            // Enter key for room code input
+            document.getElementById('roomCodeInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    joinRoom();
+                }
+            });
+        }
+
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            
+            // Show target page
+            document.getElementById(pageId).classList.add('active');
+        }
+    </script>
+</body>
+</html>
